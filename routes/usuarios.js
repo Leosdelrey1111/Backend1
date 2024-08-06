@@ -158,14 +158,22 @@ router.delete('/:id', (req, res) => {
 router.get('/search', (req, res) => {
     const { id, name } = req.query;
 
-    let searchQuery = 'SELECT * FROM Usuario';
+    let searchQuery = `
+       SELECT u.idUsuario, u.Nombre, u.CorreoElectronico, u.TipoUsuario,
+               COALESCE(e.controlNumber, p.controlNumber) AS controlNumber,
+               COALESCE(e.career, NULL) AS career,
+               COALESCE(e.groupo, NULL) AS groupo   
+        FROM Usuario u
+        LEFT JOIN Estudiante e ON u.idUsuario = e.idUsuario
+        LEFT JOIN Profesor p ON u.idUsuario = p.idUsuario
+    `;
     const queryParams = [];
 
     if (id) {
-        searchQuery += ' WHERE idUsuario = ?';
+        searchQuery += ' WHERE u.idUsuario = ?';
         queryParams.push(id);
     } else if (name) {
-        searchQuery += ' WHERE Nombre LIKE ?';
+        searchQuery += ' WHERE u.Nombre LIKE ?';
         queryParams.push(`%${name}%`);
     }
 
@@ -177,5 +185,7 @@ router.get('/search', (req, res) => {
         res.status(200).json(results);
     });
 });
+
+
 
 module.exports = router;
