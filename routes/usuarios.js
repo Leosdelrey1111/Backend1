@@ -6,26 +6,17 @@ const db = require('../db'); // Asegúrate de que este archivo esté en la ruta 
 router.post('/', (req, res) => {
     const { userType, controlNumber, email, fullName, career, groupo } = req.body;
     
-    // Validación básica
     if (!userType || !email || !fullName) {
         return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
-    // Construir la consulta SQL para insertar en la tabla Usuario
     const userQuery = `
         INSERT INTO Usuario (Nombre, CorreoElectronico, Contrasena, TipoUsuario)
         VALUES (?, ?, ?, ?)
     `;
     
-    // Valores a insertar en la tabla Usuario
-    const userValues = [
-        fullName,
-        email,
-        null, // La contraseña puede ser opcional si no se usa para Estudiantes y Profesores
-        userType
-    ];
+    const userValues = [fullName, email, null, userType];
 
-    // Ejecutar la consulta para insertar en Usuario
     db.query(userQuery, userValues, (err, results) => {
         if (err) {
             console.error('Error al insertar usuario:', err);
@@ -34,20 +25,13 @@ router.post('/', (req, res) => {
 
         const userId = results.insertId;
         
-        // Dependiendo del tipo de usuario, insertar en la tabla correspondiente
         if (userType === 'Estudiante') {
             const studentQuery = `
                 INSERT INTO Estudiante (idUsuario, Nombre, controlNumber, career, groupo)
                 VALUES (?, ?, ?, ?, ?)
             `;
             
-            const studentValues = [
-                userId,
-                fullName,
-                controlNumber,
-                career || null,
-                groupo || null,
-            ];
+            const studentValues = [userId, fullName, controlNumber, career || null, groupo || null];
             
             db.query(studentQuery, studentValues, (err) => {
                 if (err) {
@@ -58,15 +42,11 @@ router.post('/', (req, res) => {
             });
         } else if (userType === 'Profesor') {
             const professorQuery = `
-                INSERT INTO Profesor (idUsuario, Nombre , controlNumber)
+                INSERT INTO Profesor (idUsuario, Nombre, controlNumber)
                 VALUES (?, ?, ?)
             `;
             
-            const professorValues = [
-                userId,
-                fullName,
-                controlNumber
-            ];
+            const professorValues = [userId, fullName, controlNumber];
             
             db.query(professorQuery, professorValues, (err) => {
                 if (err) {
@@ -76,9 +56,125 @@ router.post('/', (req, res) => {
                 res.status(201).json({ id: userId, ...req.body });
             });
         } else {
-            // Si el tipo de usuario no es 'Estudiante' ni 'Profesor', no hacer nada más
             res.status(201).json({ id: userId, ...req.body });
         }
+    });
+});
+
+// Ruta para actualizar un usuario
+router.put('/:id', (req, res) => {
+    const userId = req.params.id;
+    const { userType, controlNumber, email, fullName, career, groupo } = req.body;
+
+    if (!email || !fullName) {
+        return res.status(400).json({ error: 'Faltan campos requeridos' });
+    }
+
+    const userQuery = `
+        UPDATE Usuario
+        SET Nombre = ?, CorreoElectronico = ?, TipoUsuario = ?
+        WHERE idUsuario = ?
+    `;
+    
+    const userValues = [fullName, email, userType, userId];
+
+    db.query(userQuery, userValues, (err) => {
+        if (err) {
+            console.error('Error al actualizar usuario:', err);
+            return res.status(500).json({ error: 'Error al actualizar usuario' });
+        }
+
+        if (userType === 'Estudiante') {
+            const studentQuery = `
+                INSERT INTO Estudiante (idUsuario, Nombre, controlNumber, career, groupo)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), controlNumber = VALUES(controlNumber), career = VALUES(career), groupo = VALUES(groupo)
+            `;
+            
+            const studentValues = [userId, fullName, controlNumber, career || null, groupo || null];
+            
+            db.query(studentQuery, studentValues, (err) => {
+                if (err) {
+                    console.error('Error al actualizar estudiante:', err);
+                    return res.status(500).json({ error: 'Error al actualizar estudiante' });
+                }
+                res.status(200).json({ id: userId, ...req.body });
+            });
+        } else if (userType === 'Profesor') {
+            const professorQuery = `
+                INSERT INTO Profesor (idUsuario, Nombre, controlNumber)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), controlNumber = VALUES(controlNumber)
+            `;
+            
+            const professorValues = [userId, fullName, controlNumber];
+            
+            db.query(professorQuery, professorValues, (err) => {
+                if (err) {
+                    console.error('Error al actualizar profesor:', err);
+                    return res.status(500).json({ error: 'Error al actualizar profesor' });
+                }
+                res.status(200).json({ id: userId, ...req.body });
+            });
+        } else {
+            res.status(200).json({ id: userId, ...req.body });
+        }
+    });
+});
+
+// Ruta para eliminar un usuario
+router.delete('/:id', (req, res) => {
+    const userId = req.params.id;
+
+    // Eliminar de las tablas específicas si existen
+    const deleteStudentQuery = 'DELETE FROM Estudiante WHERE idUsuario = ?';
+    const deleteProfessorQuery = 'DELETE FROM Profesor WHERE idUsuario = ?';
+    const deleteUserQuery = 'DELETE FROM Usuario WHERE idUsuario = ?';
+
+    db.query(deleteStudentQuery, [userId], (err) => {
+        if (err) {
+            console.error('Error al eliminar estudiante:', err);
+            return res.status(500).json({ error: 'Error al eliminar estudiante' });
+        }
+
+        db.query(deleteProfessorQuery, [userId], (err) => {
+            if (err) {
+                console.error('Error al eliminar profesor:', err);
+                return res.status(500).json({ error: 'Error al eliminar profesor' });
+            }
+
+            db.query(deleteUserQuery, [userId], (err) => {
+                if (err) {
+                    console.error('Error al eliminar usuario:', err);
+                    return res.status(500).json({ error: 'Error al eliminar usuario' });
+                }
+                res.status(200).json({ message: 'Usuario eliminado exitosamente' });
+            });
+        });
+    });
+});
+
+// Ruta para buscar usuarios por ID o nombre
+router.get('/search', (req, res) => {
+    const { id, name } = req.query;
+
+    let searchQuery = 'SELECT * FROM Usuario';
+    const queryParams = [];
+
+    if (id) {
+        searchQuery += ' WHERE idUsuario = ?';
+        queryParams.push(id);
+    } else if (name) {
+        searchQuery += ' WHERE Nombre LIKE ?';
+        queryParams.push(`%${name}%`);
+    }
+
+    db.query(searchQuery, queryParams, (err, results) => {
+        if (err) {
+            console.error('Error al buscar usuarios:', err);
+            return res.status(500).json({ error: 'Error al buscar usuarios' });
+        }
+        res.status(200).json(results);
     });
 });
 
