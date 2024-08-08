@@ -62,6 +62,7 @@ router.post('/', (req, res) => {
 });
 
 // Ruta para actualizar un usuario
+// Ruta para actualizar un usuario
 router.put('/:id', (req, res) => {
     const userId = req.params.id;
     const { userType, controlNumber, email, fullName, career, groupo } = req.body;
@@ -70,6 +71,7 @@ router.put('/:id', (req, res) => {
         return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
+    // Actualizar la tabla Usuario
     const userQuery = `
         UPDATE Usuario
         SET Nombre = ?, CorreoElectronico = ?, TipoUsuario = ?
@@ -84,43 +86,57 @@ router.put('/:id', (req, res) => {
             return res.status(500).json({ error: 'Error al actualizar usuario' });
         }
 
+        // Verificar si el usuario es Estudiante o Profesor
         if (userType === 'Estudiante') {
-            const studentQuery = `
-                INSERT INTO Estudiante (idUsuario, Nombre, controlNumber, career, groupo)
-                VALUES (?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), controlNumber = VALUES(controlNumber), career = VALUES(career), groupo = VALUES(groupo)
-            `;
-            
-            const studentValues = [userId, fullName, controlNumber, career || null, groupo || null];
-            
-            db.query(studentQuery, studentValues, (err) => {
+            const checkStudentQuery = `SELECT * FROM Estudiante WHERE idUsuario = ?`;
+            db.query(checkStudentQuery, [userId], (err, results) => {
                 if (err) {
-                    console.error('Error al actualizar estudiante:', err);
-                    return res.status(500).json({ error: 'Error al actualizar estudiante' });
+                    console.error('Error al verificar estudiante:', err);
+                    return res.status(500).json({ error: 'Error al verificar estudiante' });
                 }
-                res.status(200).json({ id: userId, ...req.body });
+
+                const studentQuery = results.length > 0
+                    ? `UPDATE Estudiante SET Nombre = ?, controlNumber = ?, career = ?, groupo = ? WHERE idUsuario = ?`
+                    : `INSERT INTO Estudiante (idUsuario, Nombre, controlNumber, career, groupo) VALUES (?, ?, ?, ?, ?)`;
+
+                const studentValues = [fullName, controlNumber, career || null, groupo || null, userId];
+
+                db.query(studentQuery, studentValues, (err) => {
+                    if (err) {
+                        console.error('Error al actualizar estudiante:', err);
+                        return res.status(500).json({ error: 'Error al actualizar estudiante' });
+                    }
+                    res.status(200).json({ id: userId, ...req.body });
+                });
             });
         } else if (userType === 'Profesor') {
-            const professorQuery = `
-                INSERT INTO Profesor (idUsuario, Nombre, controlNumber)
-                VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre), controlNumber = VALUES(controlNumber)
-            `;
-            
-            const professorValues = [userId, fullName, controlNumber];
-            
-            db.query(professorQuery, professorValues, (err) => {
+            const checkProfessorQuery = `SELECT * FROM Profesor WHERE idUsuario = ?`;
+            db.query(checkProfessorQuery, [userId], (err, results) => {
                 if (err) {
-                    console.error('Error al actualizar profesor:', err);
-                    return res.status(500).json({ error: 'Error al actualizar profesor' });
+                    console.error('Error al verificar profesor:', err);
+                    return res.status(500).json({ error: 'Error al verificar profesor' });
                 }
-                res.status(200).json({ id: userId, ...req.body });
+
+                const professorQuery = results.length > 0
+                    ? `UPDATE Profesor SET Nombre = ?, controlNumber = ? WHERE idUsuario = ?`
+                    : `INSERT INTO Profesor (idUsuario, Nombre, controlNumber) VALUES (?, ?, ?)`;
+
+                const professorValues = [fullName, controlNumber, userId];
+
+                db.query(professorQuery, professorValues, (err) => {
+                    if (err) {
+                        console.error('Error al actualizar profesor:', err);
+                        return res.status(500).json({ error: 'Error al actualizar profesor' });
+                    }
+                    res.status(200).json({ id: userId, ...req.body });
+                });
             });
         } else {
             res.status(200).json({ id: userId, ...req.body });
         }
     });
 });
+
 
 // Ruta para eliminar un usuario
 router.delete('/:id', (req, res) => {
@@ -185,6 +201,28 @@ router.get('/search', (req, res) => {
         res.status(200).json(results);
     });
 });
+
+// Ruta para obtener todos los usuarios
+router.get('/all', (req, res) => {
+    const query = `
+        SELECT u.idUsuario, u.Nombre, u.CorreoElectronico, u.TipoUsuario,
+               COALESCE(e.controlNumber, p.controlNumber) AS controlNumber,
+               COALESCE(e.career, NULL) AS career,
+               COALESCE(e.groupo, NULL) AS groupo   
+        FROM Usuario u
+        LEFT JOIN Estudiante e ON u.idUsuario = e.idUsuario
+        LEFT JOIN Profesor p ON u.idUsuario = p.idUsuario
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error al obtener usuarios:', err);
+            return res.status(500).json({ error: 'Error al obtener usuarios' });
+        }
+        res.status(200).json(results);
+    });
+});
+
 
 
 
