@@ -38,7 +38,7 @@ router.post('/', (req, res) => {
                     console.error('Error al insertar estudiante:', err);
                     return res.status(500).json({ error: 'Error al registrar estudiante' });
                 }
-                res.status(201).json({ id: userId, ...req.body });
+                res.status(201).json({ message: 'Estudiante registrado con éxito', id: userId });
             });
         } else if (userType === 'Profesor') {
             const professorQuery = `
@@ -53,15 +53,14 @@ router.post('/', (req, res) => {
                     console.error('Error al insertar profesor:', err);
                     return res.status(500).json({ error: 'Error al registrar profesor' });
                 }
-                res.status(201).json({ id: userId, ...req.body });
+                res.status(201).json({ message: 'Profesor registrado con éxito', id: userId });
             });
         } else {
-            res.status(201).json({ id: userId, ...req.body });
+            res.status(201).json({ message: 'Usuario registrado con éxito', id: userId });
         }
     });
 });
 
-// Ruta para actualizar un usuario
 // Ruta para actualizar un usuario
 router.put('/:id', (req, res) => {
     const userId = req.params.id;
@@ -106,7 +105,7 @@ router.put('/:id', (req, res) => {
                         console.error('Error al actualizar estudiante:', err);
                         return res.status(500).json({ error: 'Error al actualizar estudiante' });
                     }
-                    res.status(200).json({ id: userId, ...req.body });
+                    res.status(200).json({ message: 'Estudiante actualizado con éxito', id: userId });
                 });
             });
         } else if (userType === 'Profesor') {
@@ -128,15 +127,14 @@ router.put('/:id', (req, res) => {
                         console.error('Error al actualizar profesor:', err);
                         return res.status(500).json({ error: 'Error al actualizar profesor' });
                     }
-                    res.status(200).json({ id: userId, ...req.body });
+                    res.status(200).json({ message: 'Profesor actualizado con éxito', id: userId });
                 });
             });
         } else {
-            res.status(200).json({ id: userId, ...req.body });
+            res.status(200).json({ message: 'Usuario actualizado con éxito', id: userId });
         }
     });
 });
-
 
 // Ruta para eliminar un usuario
 router.delete('/:id', (req, res) => {
@@ -170,37 +168,7 @@ router.delete('/:id', (req, res) => {
     });
 });
 
-// Ruta para buscar usuarios por ID o nombre
-router.get('/search', (req, res) => {
-    const { id, name } = req.query;
 
-    let searchQuery = `
-       SELECT u.idUsuario, u.Nombre, u.CorreoElectronico, u.TipoUsuario,
-               COALESCE(e.controlNumber, p.controlNumber) AS controlNumber,
-               COALESCE(e.career, NULL) AS career,
-               COALESCE(e.groupo, NULL) AS groupo   
-        FROM Usuario u
-        LEFT JOIN Estudiante e ON u.idUsuario = e.idUsuario
-        LEFT JOIN Profesor p ON u.idUsuario = p.idUsuario
-    `;
-    const queryParams = [];
-
-    if (id) {
-        searchQuery += ' WHERE u.idUsuario = ?';
-        queryParams.push(id);
-    } else if (name) {
-        searchQuery += ' WHERE u.Nombre LIKE ?';
-        queryParams.push(`%${name}%`);
-    }
-
-    db.query(searchQuery, queryParams, (err, results) => {
-        if (err) {
-            console.error('Error al buscar usuarios:', err);
-            return res.status(500).json({ error: 'Error al buscar usuarios' });
-        }
-        res.status(200).json(results);
-    });
-});
 
 // Ruta para obtener todos los usuarios
 router.get('/all', (req, res) => {
@@ -222,7 +190,6 @@ router.get('/all', (req, res) => {
         res.status(200).json(results);
     });
 });
-
 
 
 

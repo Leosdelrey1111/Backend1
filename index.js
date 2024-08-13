@@ -24,9 +24,14 @@ conexion.connect(error => {
     console.log('Conexión exitosa a la BD');
 });
 
-// Rutas
+// Rutas addusers
 const usuarioRoutes = require('./routes/usuarios'); // Asegúrate de que esta ruta sea correcta
 app.use('/usuarios', usuarioRoutes);
+
+// Rutas provedores
+const suplierRoutes = require('./routes/suplier');
+app.use('/suplier', suplierRoutes);
+
 
 // Ruta raíz
 app.get('/', (req, res) => {
@@ -37,3 +42,4 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Servidor corriendo en el puerto ${port}`);
 });
+
