@@ -32,6 +32,9 @@ app.use('/usuarios', usuarioRoutes);
 const suplierRoutes = require('./routes/suplier');
 app.use('/suplier', suplierRoutes);
 
+// Rutas provedores
+const vehiclesRoutes = require('./routes/vehicleRoutes');
+app.use('/vehicleRoutes', vehiclesRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {
