@@ -2,6 +2,7 @@ const cors = require('cors');
 const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
+const morgan = require('morgan')
 
 const app = express();
 const port = 3000;
@@ -18,6 +19,8 @@ const conexion = mysql.createConnection({
     password: '123456'
 });
 
+app.use(morgan('dev'));
+
 // Conexión con la base de datos
 conexion.connect(error => {
     if (error) throw error;
@@ -32,9 +35,13 @@ app.use('/usuarios', usuarioRoutes);
 const suplierRoutes = require('./routes/suplier');
 app.use('/suplier', suplierRoutes);
 
-// Rutas provedores
-const vehiclesRoutes = require('./routes/vehicleRoutes');
-app.use('/vehicleRoutes', vehiclesRoutes);
+// Rutas vehiculos
+const vehicleRoutes = require('./routes/vehicleRoutes');
+app.use('/vehicleRoutes', vehicleRoutes);
+
+//trabajadores
+const trabajadoresRoutes = require('./routes/trabajadores');
+app.use('/trabajadores', trabajadoresRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {

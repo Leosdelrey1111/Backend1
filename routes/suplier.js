@@ -57,4 +57,30 @@ router.post('/', (req, res) => {
   });
 });
 
+// Ruta para obtener un usuario, proveedor y vehículo por su ID
+router.get('/', (req, res) => {
+  const userId = req.params.id;
+
+  // Consultar información del usuario
+  const userQuery = `
+    SELECT p.Nombre AS ProveedorNombre, p.RazonSocial, p.IdentificacionOficial, v.Placa, v.Modelo
+    FROM Usuario u
+    LEFT JOIN Proveedor p ON u.idUsuario = p.idProveedor
+    LEFT JOIN Vehiculo v ON u.idUsuario = v.idUsuario
+  `;
+
+  db.query(userQuery, [userId], (err, results) => {
+    if (err) {
+      console.error('Error al obtener la información:', err);
+      return res.status(500).json({ error: 'Error al obtener la información' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'No se encontró el usuario' });
+    }
+
+    res.status(200).json(results[0]);
+  });
+});
+
 module.exports = router;

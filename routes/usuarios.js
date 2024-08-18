@@ -180,6 +180,7 @@ router.get('/all', (req, res) => {
         FROM Usuario u
         LEFT JOIN Estudiante e ON u.idUsuario = e.idUsuario
         LEFT JOIN Profesor p ON u.idUsuario = p.idUsuario
+        where u.TipoUsuario = 'Estudiante' or u.TipoUsuario = 'Profesor'
     `;
 
     db.query(query, (err, results) => {
