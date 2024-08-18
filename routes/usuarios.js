@@ -2,6 +2,47 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db'); // Asegúrate de que este archivo esté en la ruta correcta
 
+
+
+
+
+// Ruta para iniciar sesión
+// Ruta para iniciar sesión (ya implementada)
+router.post('/login', (req, res) => {
+    const { user, contrasena } = req.body; 
+
+    if (!user || !contrasena) {
+        return res.status(400).json({ error: 'Faltan campos requeridos' });
+    }
+
+    const userQuery = `
+        SELECT u.CorreoElectronico AS user, u.Nombre AS nombre, u.TipoUsuario
+        FROM Usuario u
+        WHERE u.CorreoElectronico = ? AND u.Contrasena = ?
+    `;
+
+    db.query(userQuery, [user, contrasena], (err, results) => {
+        if (err) {
+            console.error('Error al iniciar sesión:', err);
+            return res.status(500).json({ error: 'Error al iniciar sesión' });
+        }
+
+        if (results.length > 0) {
+            const usuario = results[0];
+            const role = usuario.TipoUsuario;
+
+            res.status(200).json({ message: 'Inicio de sesión exitoso', user: usuario, TipoUsuario: role });
+        } else {
+            res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+        }
+    });
+});
+
+
+
+
+
+
 // Ruta para crear un nuevo usuario
 router.post('/', (req, res) => {
     const { userType, controlNumber, email, fullName, career, groupo } = req.body;
