@@ -16,7 +16,7 @@ router.post('/login', (req, res) => {
     }
 
     const userQuery = `
-        SELECT u.CorreoElectronico AS user, u.Nombre AS nombre, u.TipoUsuario
+        SELECT u.CorreoElectronico AS user, u.Nombre AS nombre, u.TipoUsuario, u.codigo as barCode
         FROM Usuario u
         WHERE u.CorreoElectronico = ? AND u.Contrasena = ?
     `;
@@ -51,12 +51,14 @@ router.post('/', (req, res) => {
         return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
+    const barCode= generateBarcodeValue(10);
+
     const userQuery = `
-        INSERT INTO Usuario (Nombre, CorreoElectronico, Contrasena, TipoUsuario)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO Usuario (Nombre, CorreoElectronico, Contrasena, TipoUsuario, codigo)
+        VALUES (?, ?, ?, ?,?)
     `;
     
-    const userValues = [fullName, email, null, userType];
+    const userValues = [fullName, email, null, userType,barCode];
 
     db.query(userQuery, userValues, (err, results) => {
         if (err) {
@@ -232,6 +234,42 @@ router.get('/all', (req, res) => {
         res.status(200).json(results);
     });
 });
+
+router.get('/barcode/:code', (req, res) => {
+    const barcode = req.params.code;
+
+    if (!barcode) {
+        return res.status(400).json({ error: 'Código de barras es requerido' });
+    }
+
+    const query = `
+        SELECT u.Nombre AS nombre, u.CorreoElectronico AS usuario, u.TipoUsuario AS tipo
+        FROM Usuario u
+        WHERE u.codigo = ?
+    `;
+
+    db.query(query, [barcode], (err, results) => {
+        if (err) {
+            console.error('Error al obtener usuario por código de barras:', err);
+            return res.status(500).json({ error: 'Error al obtener usuario por código de barras' });
+        }
+
+        if (results.length > 0) {
+            res.status(200).json(results[0]);
+        } else {
+            res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+    });
+});
+
+function generateBarcodeValue(length = 10) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
 
 
 
