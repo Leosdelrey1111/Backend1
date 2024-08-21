@@ -2,6 +2,50 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db'); // Asegúrate de que este archivo esté en la ruta correcta
 
+<<<<<<< HEAD
+=======
+
+
+
+
+// Ruta para iniciar sesión
+// Ruta para iniciar sesión (ya implementada)
+router.post('/login', (req, res) => {
+    const { user, contrasena } = req.body; 
+
+    if (!user || !contrasena) {
+        return res.status(400).json({ error: 'Faltan campos requeridos' });
+    }
+
+    const userQuery = `
+        SELECT u.CorreoElectronico AS user, u.Nombre AS nombre, u.TipoUsuario, u.codigo as barCode
+        FROM Usuario u
+        WHERE u.CorreoElectronico = ? AND u.Contrasena = ?
+    `;
+
+    db.query(userQuery, [user, contrasena], (err, results) => {
+        if (err) {
+            console.error('Error al iniciar sesión:', err);
+            return res.status(500).json({ error: 'Error al iniciar sesión' });
+        }
+
+        if (results.length > 0) {
+            const usuario = results[0];
+            const role = usuario.TipoUsuario;
+
+            res.status(200).json({ message: 'Inicio de sesión exitoso', user: usuario, TipoUsuario: role });
+        } else {
+            res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+        }
+    });
+});
+
+
+
+
+
+
+>>>>>>> 131b3ad62c9cb9a4686a3da294a61aec807cb9d5
 // Ruta para crear un nuevo usuario
 router.post('/', (req, res) => {
     const { userType, controlNumber, email, fullName, career, groupo } = req.body;
@@ -10,12 +54,14 @@ router.post('/', (req, res) => {
         return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
+    const barCode= generateBarcodeValue(10);
+
     const userQuery = `
-        INSERT INTO Usuario (Nombre, CorreoElectronico, Contrasena, TipoUsuario)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO Usuario (Nombre, CorreoElectronico, Contrasena, TipoUsuario, codigo)
+        VALUES (?, ?, ?, ?,?)
     `;
     
-    const userValues = [fullName, email, null, userType];
+    const userValues = [fullName, email, null, userType,barCode];
 
     db.query(userQuery, userValues, (err, results) => {
         if (err) {
@@ -192,6 +238,7 @@ router.get('/all', (req, res) => {
     });
 });
 
+<<<<<<< HEAD
 // Ruta para iniciar sesión
 // Ruta para iniciar sesión (ya implementada)
 router.post('/login', (req, res) => {
@@ -220,10 +267,47 @@ router.post('/login', (req, res) => {
             res.status(200).json({ message: 'Inicio de sesión exitoso', user: usuario, TipoUsuario: role });
         } else {
             res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+=======
+router.get('/barcode/:code', (req, res) => {
+    const barcode = req.params.code;
+
+    if (!barcode) {
+        return res.status(400).json({ error: 'Código de barras es requerido' });
+    }
+
+    const query = `
+        SELECT u.Nombre AS nombre, u.CorreoElectronico AS usuario, u.TipoUsuario AS tipo
+        FROM Usuario u
+        WHERE u.codigo = ?
+    `;
+
+    db.query(query, [barcode], (err, results) => {
+        if (err) {
+            console.error('Error al obtener usuario por código de barras:', err);
+            return res.status(500).json({ error: 'Error al obtener usuario por código de barras' });
+        }
+
+        if (results.length > 0) {
+            res.status(200).json(results[0]);
+        } else {
+            res.status(404).json({ error: 'Usuario no encontrado' });
+>>>>>>> 131b3ad62c9cb9a4686a3da294a61aec807cb9d5
         }
     });
 });
 
+<<<<<<< HEAD
+=======
+function generateBarcodeValue(length = 10) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
+
+>>>>>>> 131b3ad62c9cb9a4686a3da294a61aec807cb9d5
 
 
 module.exports = router;
