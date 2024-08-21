@@ -15,8 +15,8 @@ app.use(bodyParser.json());
 const conexion = mysql.createConnection({
     host: 'localhost',
     database: 'estacionamiento',
-    user: 'root2',
-    password: ''
+    user: 'root-e',
+    password: '123456'
 });
 
 app.use(morgan('dev'));
@@ -42,6 +42,11 @@ app.use('/vehicleRoutes', vehicleRoutes);
 //trabajadores
 const trabajadoresRoutes = require('./routes/trabajadores');
 app.use('/trabajadores', trabajadoresRoutes);
+
+//reportes
+const reportesRoutes = require('./routes/reportes');
+app.use('/reportes', reportesRoutes);
+
 
 // Ruta raíz
 app.get('/', (req, res) => {
