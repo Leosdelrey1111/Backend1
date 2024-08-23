@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 // Configuración de conexión a la base de datos
 const conexion = mysql.createConnection({
     host: 'localhost',
-    database: 'estacionamiento',
+    database: 'estacionamiento2',
     user: 'root-e',
     password: '123456'
 });
@@ -47,6 +47,8 @@ app.use('/trabajadores', trabajadoresRoutes);
 const reportesRoutes = require('./routes/reportes');
 app.use('/reportes', reportesRoutes);
 
+const entradas = require('./routes/entradasalidas');
+app.use('/entradas-salidas', entradas);
 
 // Ruta raíz
 app.get('/', (req, res) => {

@@ -14,7 +14,7 @@ router.post('/', (req, res) => {
     const contenido = `
         Total de Vehículos: ${totalVehiculos}\n
         Ingresos Totales: ${ingresosTotales}\n
-        Tiempo Promedio de Estacionamiento: ${tiempoPromedio}\n
+        Tiempo Promedio de Estacionamiento: ${tiempoPromedio} minutos\n
         Eventos Importantes: ${eventosImportantes}\n
         Observaciones: ${observaciones}
     `;
@@ -24,11 +24,9 @@ router.post('/', (req, res) => {
             console.error('Error al guardar el reporte:', err);
             return res.status(500).send('Error al guardar el reporte');
         }
-        res.send('Reporte guardado exitosamente');
+        res.status(200).json({message:'Reporte guardado exitosamente'});
     });
 });
-
-module.exports = router;
 
 
 router.get('/exportar/pdf/:id', (req, res) => {

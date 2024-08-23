@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db'); // Asegúrate de que este archivo esté en la ruta correcta
 
-
-
 // Ruta para crear un nuevo usuario
 router.post('/', (req, res) => {
     const { userType, controlNumber, email, fullName, career, groupo } = req.body;
@@ -62,6 +60,50 @@ router.post('/', (req, res) => {
         } else {
             res.status(201).json({ message: 'Usuario registrado con éxito', id: userId });
         }
+    });
+});
+
+// Ruta para cambiar la contraseña
+router.put('/change-password', (req, res) => {
+    const { email, oldPassword, newPassword } = req.body;
+    
+
+    if (!email || !oldPassword || !newPassword) {
+        console.log(req.body)
+        return res.status(400).json({ error: 'Faltan campos requeridos',body:req.body });
+    }
+
+    // Verifica el usuario y la contraseña actual
+    const verifyUserQuery = `
+        SELECT * FROM Usuario
+        WHERE CorreoElectronico = ? AND Contrasena = ?
+    `;
+
+    db.query(verifyUserQuery, [email, oldPassword], (err, results) => {
+        if (err) {
+            console.error('Error al verificar usuario:', err);
+            return res.status(500).json({ error: 'Error al verificar usuario' });
+        }
+
+        if (results.length === 0) {
+            return res.status(401).json({ error: 'Correo electrónico o contraseña actual incorrectos' });
+        }
+
+        // Actualiza la contraseña
+        const updatePasswordQuery = `
+            UPDATE Usuario
+            SET Contrasena = ?
+            WHERE CorreoElectronico = ?
+        `;
+
+        db.query(updatePasswordQuery, [newPassword, email], (err) => {
+            if (err) {
+                console.error('Error al actualizar contraseña:', err);
+                return res.status(500).json({ error: 'Error al actualizar contraseña' });
+            }
+
+            res.status(200).json({ message: 'Contraseña actualizada con éxito' });
+        });
     });
 });
 
@@ -204,7 +246,7 @@ router.get('/barcode/:code', (req, res) => {
     }
 
     const query = `
-        SELECT u.Nombre AS nombre, u.CorreoElectronico AS usuario, u.TipoUsuario AS tipo
+        SELECT u.idUsuario as ID, u.Nombre AS nombre, u.CorreoElectronico AS usuario, u.TipoUsuario AS tipo
         FROM Usuario u
         WHERE u.codigo = ?
     `;
@@ -262,6 +304,7 @@ router.post('/login', (req, res) => {
         }
     });
 });
+
 
 
 module.exports = router;

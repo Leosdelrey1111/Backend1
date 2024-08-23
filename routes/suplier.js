@@ -4,9 +4,9 @@ const db = require('../db'); // Asegúrate de que este archivo esté en la ruta 
 
 // Ruta para crear un nuevo usuario, proveedor y vehículo
 router.post('/', (req, res) => {
-  const { model, plates, companyName, providerName, officialId, email, fullName } = req.body;
+  const { model, plates, companyName, providerName, email, fullName } = req.body;
 
-  if (!fullName || !model || !plates || !companyName || !providerName || !officialId) {
+  if (!fullName || !model || !plates || !companyName || !providerName) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
 
@@ -27,10 +27,10 @@ router.post('/', (req, res) => {
 
     // Crear el proveedor asociado al usuario
     const providerQuery = `
-      INSERT INTO Proveedor (idProveedor, Nombre, RazonSocial, IdentificacionOficial)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO Proveedor (idProveedor, Nombre, RazonSocial)
+      VALUES (?, ?, ?)
     `;
-    const providerValues = [userId, providerName, companyName, officialId];
+    const providerValues = [userId, providerName, companyName];
 
     db.query(providerQuery, providerValues, (err) => {
       if (err) {
@@ -63,7 +63,7 @@ router.get('/', (req, res) => {
 
   // Consultar información del usuario
   const userQuery = `
-    SELECT p.Nombre AS ProveedorNombre, p.RazonSocial, p.IdentificacionOficial, v.Placa, v.Modelo
+    SELECT p.Nombre AS ProveedorNombre, p.RazonSocial, v.Placa, v.Modelo
     FROM Usuario u
     LEFT JOIN Proveedor p ON u.idUsuario = p.idProveedor
     LEFT JOIN Vehiculo v ON u.idUsuario = v.idUsuario
