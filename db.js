@@ -1,11 +1,13 @@
-// db.js
 const mysql = require('mysql2');
+require('dotenv').config(); // Asegúrate de que este módulo esté instalado
 
+// Crear conexión a la base de datos usando variables de entorno
 const connection = mysql.createConnection({
-    host: 'localhost',
-    database: 'estacionamiento2',
-    user: 'root-e',
-    password: '123456'
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT, // Asegúrate de especificar el puerto si es necesario
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
 });
 
 connection.connect(error => {
