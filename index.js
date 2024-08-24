@@ -1,49 +1,49 @@
 const cors = require('cors');
 const express = require('express');
-const mysql = require('mysql');
+const mysql = require('mysql2'); // Usa mysql2 para mejor compatibilidad
 const bodyParser = require('body-parser');
-const morgan = require('morgan')
+const morgan = require('morgan');
+require('dotenv').config(); // Cargar variables de entorno
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(morgan('dev'));
 
 // Configuración de conexión a la base de datos
 const conexion = mysql.createConnection({
-    host: 'localhost',
-    database: 'estacionamiento2',
-    user: 'root-e',
-    password: '123456'
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT, // Asegúrate de especificar el puerto si es necesario
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
 });
-
-app.use(morgan('dev'));
 
 // Conexión con la base de datos
 conexion.connect(error => {
-    if (error) throw error;
+    if (error) {
+        console.error('Error conectando a la base de datos:', error.stack);
+        return;
+    }
     console.log('Conexión exitosa a la BD');
 });
 
-// Rutas addusers
-const usuarioRoutes = require('./routes/usuarios'); // Asegúrate de que esta ruta sea correcta
+// Rutas
+const usuarioRoutes = require('./routes/usuarios');
 app.use('/usuarios', usuarioRoutes);
 
-// Rutas provedores
 const suplierRoutes = require('./routes/suplier');
 app.use('/suplier', suplierRoutes);
 
-// Rutas vehiculos
 const vehicleRoutes = require('./routes/vehicleRoutes');
 app.use('/vehicleRoutes', vehicleRoutes);
 
-//trabajadores
 const trabajadoresRoutes = require('./routes/trabajadores');
 app.use('/trabajadores', trabajadoresRoutes);
 
-//reportes
 const reportesRoutes = require('./routes/reportes');
 app.use('/reportes', reportesRoutes);
 
@@ -59,4 +59,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Servidor corriendo en el puerto ${port}`);
 });
-
