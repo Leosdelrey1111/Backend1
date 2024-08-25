@@ -1,22 +1,28 @@
 const cors = require('cors');
 const express = require('express');
-const mysql = require('mysql2'); // Usa mysql2 para mejor compatibilidad
+const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-require('dotenv').config(); // Cargar variables de entorno
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// Configuración de CORS
+const corsOptions = {
+    origin: 'https://your-netlify-site.netlify.app', // Reemplaza con la URL de tu sitio en Netlify
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(morgan('dev'));
 
 // Configuración de conexión a la base de datos
 const conexion = mysql.createConnection({
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT, // Asegúrate de especificar el puerto si es necesario
+    port: process.env.DB_PORT,
     database: process.env.DB_NAME,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD
