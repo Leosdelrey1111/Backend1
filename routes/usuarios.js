@@ -10,14 +10,14 @@ router.post('/', (req, res) => {
         return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
-    const barCode= generateBarcodeValue(10);
+    const barCode = generateBarcodeValue(10);
 
     const userQuery = `
         INSERT INTO Usuario (Nombre, CorreoElectronico, Contrasena, TipoUsuario, codigo)
-        VALUES (?, ?, ?, ?,?)
+        VALUES (?, ?, ?, ?, ?)
     `;
     
-    const userValues = [fullName, email, null, userType,barCode];
+    const userValues = [fullName, email, null, userType, barCode];
 
     db.query(userQuery, userValues, (err, results) => {
         if (err) {
@@ -67,10 +67,9 @@ router.post('/', (req, res) => {
 router.put('/change-password', (req, res) => {
     const { email, oldPassword, newPassword } = req.body;
     
-
     if (!email || !oldPassword || !newPassword) {
         console.log(req.body)
-        return res.status(400).json({ error: 'Faltan campos requeridos',body:req.body });
+        return res.status(400).json({ error: 'Faltan campos requeridos', body: req.body });
     }
 
     // Verifica el usuario y la contraseña actual
@@ -214,8 +213,6 @@ router.delete('/:id', (req, res) => {
     });
 });
 
-
-
 // Ruta para obtener todos los usuarios
 router.get('/all', (req, res) => {
     const query = `
@@ -226,7 +223,7 @@ router.get('/all', (req, res) => {
         FROM Usuario u
         LEFT JOIN Estudiante e ON u.idUsuario = e.idUsuario
         LEFT JOIN Profesor p ON u.idUsuario = p.idUsuario
-        where u.TipoUsuario = 'Estudiante' or u.TipoUsuario = 'Profesor'
+        WHERE u.TipoUsuario = 'Estudiante' OR u.TipoUsuario = 'Profesor'
     `;
 
     db.query(query, (err, results) => {
@@ -238,75 +235,40 @@ router.get('/all', (req, res) => {
     });
 });
 
-router.get('/barcode/:code', (req, res) => {
-    const barcode = req.params.code;
-
-    if (!barcode) {
-        return res.status(400).json({ error: 'Código de barras es requerido' });
-    }
+// Ruta para buscar un usuario por ID
+router.get('/:id', (req, res) => {
+    const userId = req.params.id;
 
     const query = `
-        SELECT u.idUsuario as ID, u.Nombre AS nombre, u.CorreoElectronico AS usuario, u.TipoUsuario AS tipo
+        SELECT u.idUsuario, u.Nombre, u.CorreoElectronico, u.TipoUsuario,
+               COALESCE(e.controlNumber, p.controlNumber) AS controlNumber,
+               COALESCE(e.career, NULL) AS career,
+               COALESCE(e.groupo, NULL) AS groupo   
         FROM Usuario u
-        WHERE u.codigo = ?
+        LEFT JOIN Estudiante e ON u.idUsuario = e.idUsuario
+        LEFT JOIN Profesor p ON u.idUsuario = p.idUsuario
+        WHERE u.idUsuario = ?
     `;
 
-    db.query(query, [barcode], (err, results) => {
+    db.query(query, [userId], (err, results) => {
         if (err) {
-            console.error('Error al obtener usuario por código de barras:', err);
-            return res.status(500).json({ error: 'Error al obtener usuario por código de barras' });
+            console.error('Error al buscar usuario:', err);
+            return res.status(500).json({ error: 'Error al buscar usuario' });
         }
-
-        if (results.length > 0) {
-            res.status(200).json(results[0]);
-        } else {
-            res.status(404).json({ error: 'Usuario no encontrado' });
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
         }
+        res.status(200).json(results[0]);
     });
 });
 
-function generateBarcodeValue(length = 10) {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
+function generateBarcodeValue(length) {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let barcode = '';
     for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
+        barcode += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return result;
+    return barcode;
 }
-
-// Ruta para iniciar sesión
-router.post('/login', (req, res) => {
-    const { user, contrasena } = req.body;
-
-    if (!user || !contrasena) {
-        return res.status(400).json({ error: 'Faltan campos requeridos' });
-    }
-
-    console.log(`Iniciando sesión con: user=${user}, contrasena=${contrasena}`);
-
-    const userQuery = `
-        SELECT u.CorreoElectronico AS user, u.Nombre AS nombre, u.TipoUsuario, u.codigo as barCode
-        FROM Usuario u
-        WHERE u.CorreoElectronico = ? AND u.Contrasena = ?
-    `;
-
-    db.query(userQuery, [user, contrasena], (err, results) => {
-        if (err) {
-            console.error('Error al iniciar sesión:', err);
-            return res.status(500).json({ error: 'Error al iniciar sesión' });
-        }
-
-        if (results.length > 0) {
-            const usuario = results[0];
-            const role = usuario.TipoUsuario;
-
-            console.log('Inicio de sesión exitoso:', usuario);
-
-            res.status(200).json({ message: 'Inicio de sesión exitoso', user: usuario, TipoUsuario: role });
-        } else {
-            res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
-        }
-    });
-});
 
 module.exports = router;

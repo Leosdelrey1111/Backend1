@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 
 // Configuración de CORS
 const corsOptions = {
-    origin: 'https://your-netlify-site.netlify.app', // Reemplaza con la URL de tu sitio en Netlify
+    origin: 'https://esatcionamiento.netlify.app/', // Reemplaza con la URL de tu sitio en Netlify
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 };
