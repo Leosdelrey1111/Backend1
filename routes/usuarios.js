@@ -273,14 +273,16 @@ function generateBarcodeValue(length = 10) {
     }
     return result;
 }
+
 // Ruta para iniciar sesión
-// Ruta para iniciar sesión (ya implementada)
 router.post('/login', (req, res) => {
-    const { user, contrasena } = req.body; 
+    const { user, contrasena } = req.body;
 
     if (!user || !contrasena) {
         return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
+
+    console.log(`Iniciando sesión con: user=${user}, contrasena=${contrasena}`);
 
     const userQuery = `
         SELECT u.CorreoElectronico AS user, u.Nombre AS nombre, u.TipoUsuario, u.codigo as barCode
@@ -298,13 +300,13 @@ router.post('/login', (req, res) => {
             const usuario = results[0];
             const role = usuario.TipoUsuario;
 
+            console.log('Inicio de sesión exitoso:', usuario);
+
             res.status(200).json({ message: 'Inicio de sesión exitoso', user: usuario, TipoUsuario: role });
         } else {
             res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
         }
     });
 });
-
-
 
 module.exports = router;
